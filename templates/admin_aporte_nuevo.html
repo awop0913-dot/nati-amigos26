@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Registrar aporte</h3>
+{% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+<form method="POST">
+  <label>Número de socio:</label>
+  <input type="text" name="numero_socio" class="form-control mb-2" required>
+  <label>Fecha:</label>
+  <input type="date" name="fecha" class="form-control mb-2" required>
+  <label>Monto:</label>
+  <input type="number" step="0.01" name="monto" class="form-control mb-2" required>
+  <label>Frecuencia (mensual, diario, etc.):</label>
+  <input type="text" name="frecuencia" class="form-control mb-3">
+  <button class="btn btn-success">Guardar aporte</button>
+  <a href="/admin/panel" class="btn btn-secondary">Volver</a>
+</form>
+{% endblock %}

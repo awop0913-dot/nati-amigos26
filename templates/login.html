@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-4">
+    <div class="card shadow">
+      <div class="card-body">
+        <h4 class="mb-3 text-center">Ingreso de Socio</h4>
+        {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+        <form method="POST">
+          <label>Número de socio:</label>
+          <input type="text" name="numero" class="form-control mb-2" required>
+          <label>Contraseña:</label>
+          <input type="password" name="password" class="form-control mb-3" required>
+          <button class="btn btn-primary w-100">Ingresar</button>
+        </form>
+        <hr>
+        <div class="text-center">
+          <a href="/admin/login">Soy administrador</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

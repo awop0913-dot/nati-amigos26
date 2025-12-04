@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Mis pagos de préstamo</h3>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Fecha</th><th>Principal</th><th>Interés</th><th>Multa</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for r in rows %}
+  <tr>
+    <td>{{ r["fecha"] }}</td>
+    <td>${{ r["monto_principal"] }}</td>
+    <td>${{ r["monto_interes"] }}</td>
+    <td>${{ r["monto_multa"] }}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

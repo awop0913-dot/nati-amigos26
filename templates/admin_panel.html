@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="mb-4">Panel del Administrador</h2>
+<div class="row mb-4">
+  <div class="col-md-3">
+    <div class="card shadow p-3 text-center">
+      <h5>Total Socios</h5>
+      <p class="display-6">{{ total_socios }}</p>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card shadow p-3 text-center">
+      <h5>Total Aportes</h5>
+      <p class="display-6">${{ total_aportes }}</p>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card shadow p-3 text-center">
+      <h5>Total Retiros</h5>
+      <p class="display-6">${{ total_retiros }}</p>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card shadow p-3 text-center">
+      <h5>Saldo Neto</h5>
+      <p class="display-6">${{ saldo_neto }}</p>
+    </div>
+  </div>
+</div>
+<div class="mt-3">
+  <a href="/admin/socios" class="btn btn-outline-dark">Gestión de socios</a>
+  <a href="/admin/aportes/nuevo" class="btn btn-outline-success">Registrar aporte</a>
+  <a href="/admin/retiros/nuevo" class="btn btn-outline-warning">Registrar retiro</a>
+  <a href="/admin/prestamos/nuevo" class="btn btn-outline-info">Registrar préstamo</a>
+  <a href="/admin/pagos/nuevo" class="btn btn-outline-primary">Registrar pago préstamo</a>
+</div>
+<hr>
+<h4>Copias de seguridad</h4>
+<a href="/admin/backup_db" class="btn btn-primary me-2">Descargar backup</a>
+<a href="/admin/restore" class="btn btn-warning">Restaurar desde archivo</a>
+{% endblock %}

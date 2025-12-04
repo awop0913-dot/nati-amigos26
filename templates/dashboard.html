@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="mb-4">Bienvenido, {{ nombre }}</h2>
+<div class="row mb-4">
+  <div class="col-md-3">
+    <div class="card card-azul card-dashboard">
+      <h6>Total aportes</h6>
+      <p class="h4">${{ resumen.total_aportes }}</p>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card card-naranja card-dashboard">
+      <h6>Total retiros</h6>
+      <p class="h4">${{ resumen.total_retiros }}</p>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card card-verde card-dashboard">
+      <h6>Saldo ahorro</h6>
+      <p class="h4">${{ resumen.saldo_ahorro }}</p>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card card-morado card-dashboard">
+      <h6>Total préstamos</h6>
+      <p class="h4">${{ resumen.total_prestamos }}</p>
+    </div>
+  </div>
+</div>
+{% endblock %}

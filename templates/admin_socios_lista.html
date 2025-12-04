@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Gestión de socios</h3>
+<a href="/admin/socios/nuevo" class="btn btn-success mb-3">Crear nuevo socio</a>
+<table class="table table-striped">
+  <thead>
+    <tr><th>Número</th><th>Nombre</th><th>Acciones</th></tr>
+  </thead>
+  <tbody>
+  {% for s in socios %}
+  <tr>
+    <td>{{ s["numero_socio"] }}</td>
+    <td>{{ s["nombre"] }}</td>
+    <td>
+      <a href="/admin/socios/{{ s['id'] }}/editar" class="btn btn-sm btn-primary">Editar</a>
+      <a href="/admin/socios/{{ s['id'] }}/password" class="btn btn-sm btn-warning">Contraseña</a>
+      <form action="/admin/socios/{{ s['id'] }}/eliminar" method="POST" style="display:inline-block;" onsubmit="return confirm('¿Eliminar socio y todos sus datos?');">
+        <button class="btn btn-sm btn-danger">Eliminar</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Registrar pago de préstamo</h3>
+{% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+<form method="POST">
+  <label>Préstamo:</label>
+  <select name="prestamo_id" class="form-control mb-2" required>
+    {% for p in prestamos %}
+    <option value="{{ p['id'] }}">
+      {{ p['numero_socio'] }} - {{ p['nombre'] }} | Monto: {{ p['monto'] }} | Saldo: {{ p['saldo_pendiente'] }}
+    </option>
+    {% endfor %}
+  </select>
+  <label>Fecha:</label>
+  <input type="date" name="fecha" class="form-control mb-2" required>
+  <label>Monto principal:</label>
+  <input type="number" step="0.01" name="monto_principal" class="form-control mb-2" required>
+  <label>Monto interés:</label>
+  <input type="number" step="0.01" name="monto_interes" class="form-control mb-2" required>
+  <label>Monto multa:</label>
+  <input type="number" step="0.01" name="monto_multa" class="form-control mb-3" value="0">
+  <button class="btn btn-primary">Guardar pago</button>
+  <a href="/admin/panel" class="btn btn-secondary">Volver</a>
+</form>
+{% endblock %}

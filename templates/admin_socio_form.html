@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>{{ 'Nuevo socio' if modo=='nuevo' else 'Editar socio' }}</h3>
+{% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+<form method="POST">
+  <label>Número de socio:</label>
+  <input type="text" name="numero_socio" class="form-control mb-2" required value="{{ socio['numero_socio'] if socio else '' }}">
+  <label>Nombre:</label>
+  <input type="text" name="nombre" class="form-control mb-2" required value="{{ socio['nombre'] if socio else '' }}">
+  {% if modo == 'nuevo' %}
+  <label>Contraseña inicial:</label>
+  <input type="password" name="password" class="form-control mb-2" required>
+  {% endif %}
+  <button class="btn btn-primary">Guardar</button>
+  <a href="/admin/socios" class="btn btn-secondary">Volver</a>
+</form>
+{% endblock %}

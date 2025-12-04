@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Registrar préstamo</h3>
+{% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+<form method="POST">
+  <label>Número de socio:</label>
+  <input type="text" name="numero_socio" class="form-control mb-2" required>
+  <label>Fecha inicio:</label>
+  <input type="date" name="fecha_inicio" class="form-control mb-2" required>
+  <label>Fecha fin:</label>
+  <input type="date" name="fecha_fin" class="form-control mb-2">
+  <label>Monto:</label>
+  <input type="number" step="0.01" name="monto" class="form-control mb-2" required>
+  <label>Tasa de interés (%):</label>
+  <input type="number" step="0.01" name="tasa_interes" class="form-control mb-2" required>
+  <label>Tipo de interés:</label>
+  <input type="text" name="tipo_interes" class="form-control mb-2">
+  <label>Estado:</label>
+  <input type="text" name="estado" class="form-control mb-3" value="Vigente">
+  <button class="btn btn-info">Guardar préstamo</button>
+  <a href="/admin/panel" class="btn btn-secondary">Volver</a>
+</form>
+{% endblock %}

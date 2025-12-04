@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title if title else "Portal de Socios" }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .navbar-custom { background: #0d6efd; color: white; padding: 10px 20px; font-size: 18px; font-weight: 600; }
+        .navbar-custom a { color: white; text-decoration: none; }
+        .sidebar { width: 230px; height: 100vh; background: #ffffff; border-right: 1px solid #dee2e6;
+                   position: fixed; top: 0; left: 0; padding-top: 70px; }
+        .sidebar a { display: block; padding: 10px 18px; font-size: 15px; color: #444; text-decoration: none; }
+        .sidebar a:hover { background: #0d6efd; color: white; }
+        .content { padding: 20px; }
+        @media (min-width: 992px) { .content { margin-left: 240px; } }
+    </style>
+</head>
+<body>
+<div class="navbar-custom">
+    <a href="/">💼 Cooperativa - Portal Financiero</a>
+</div>
+
+{% if session.get('user_id') or session.get('admin_id') %}
+<div class="sidebar">
+    {% if session.get('admin_id') %}
+        <a href="/admin/panel"><i class="bi bi-speedometer2"></i> Panel admin</a>
+        <a href="/admin/socios"><i class="bi bi-people"></i> Gestión de socios</a>
+        <a href="/admin/aportes/nuevo"><i class="bi bi-coin"></i> Registrar aporte</a>
+        <a href="/admin/retiros/nuevo"><i class="bi bi-arrow-down-circle"></i> Registrar retiro</a>
+        <a href="/admin/prestamos/nuevo"><i class="bi bi-cash-coin"></i> Registrar préstamo</a>
+        <a href="/admin/pagos/nuevo"><i class="bi bi-receipt"></i> Registrar pago préstamo</a>
+        <a href="/admin/backup_db"><i class="bi bi-hdd-stack"></i> Descargar backup</a>
+        <a href="/admin/restore"><i class="bi bi-upload"></i> Restaurar backup</a>
+        <a href="/logout"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</a>
+    {% else %}
+        <a href="/dashboard"><i class="bi bi-house-door"></i> Inicio</a>
+        <a href="/aportes"><i class="bi bi-coin"></i> Mis aportes</a>
+        <a href="/retiros"><i class="bi bi-arrow-down-circle"></i> Mis retiros</a>
+        <a href="/prestamos"><i class="bi bi-cash-coin"></i> Mis préstamos</a>
+        <a href="/pagos"><i class="bi bi-receipt"></i> Mis pagos</a>
+        <a href="/logout"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</a>
+    {% endif %}
+</div>
+{% endif %}
+
+<div class="content">
+    {% block content %}{% endblock %}
+</div>
+</body>
+</html>

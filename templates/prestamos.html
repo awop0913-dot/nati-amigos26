@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Mis préstamos</h3>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Inicio</th><th>Fin</th><th>Monto</th><th>Tasa</th>
+      <th>Tipo</th><th>Saldo pendiente</th><th>Estado</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for r in rows %}
+  <tr>
+    <td>{{ r["fecha_inicio"] }}</td>
+    <td>{{ r["fecha_fin"] }}</td>
+    <td>${{ r["monto"] }}</td>
+    <td>{{ r["tasa_interes"] }}</td>
+    <td>{{ r["tipo_interes"] }}</td>
+    <td>${{ r["saldo_pendiente"] }}</td>
+    <td>{{ r["estado"] }}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

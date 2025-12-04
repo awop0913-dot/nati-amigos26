@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Mis retiros</h3>
+<table class="table table-striped">
+  <thead><tr><th>Fecha</th><th>Monto</th><th>Motivo</th></tr></thead>
+  <tbody>
+  {% for r in rows %}
+  <tr>
+    <td>{{ r["fecha"] }}</td>
+    <td>${{ r["monto"] }}</td>
+    <td>{{ r["motivo"] }}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
