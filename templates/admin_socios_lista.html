@@ -14,7 +14,8 @@
     <td>
       <a href="/admin/socios/{{ s['id'] }}/editar" class="btn btn-sm btn-primary">Editar</a>
       <a href="/admin/socios/{{ s['id'] }}/password" class="btn btn-sm btn-warning">Contraseña</a>
-      <form action="/admin/socios/{{ s['id'] }}/eliminar" method="POST" style="display:inline-block;" onsubmit="return confirm('¿Eliminar socio y todos sus datos?');">
+      <a href="/admin/socios/{{ s['id'] }}/pdf" class="btn btn-sm btn-secondary">Descargar PDF</a>
+            <form action="/admin/socios/{{ s['id'] }}/eliminar" method="POST" style="display:inline-block;" onsubmit="return confirm('¿Eliminar socio y todos sus datos?');">
         <button class="btn btn-sm btn-danger">Eliminar</button>
       </form>
     </td>
