@@ -639,6 +639,67 @@ def admin_pago_nuevo():
     conn.close()
     return render_template("admin_pago_nuevo.html", prestamos=prestamos, error=error)
 
+# ==============================
+# RESUMEN FINANCIERO
+# ==============================
+
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+
+@app.route("/admin/socios/<int:socio_id>/pdf")
+@admin_required
+def admin_socio_pdf(socio_id):
+    conn = db()
+    cur = conn.cursor()
+
+    # Datos del socio
+    cur.execute("SELECT numero_socio, nombre FROM socios_web WHERE id=?", (socio_id,))
+    socio = cur.fetchone()
+
+    if not socio:
+        return "Socio no encontrado"
+
+    # Resumen financiero
+    resumen = calcular_resumen_socio(socio_id)
+
+    # Nombre del archivo PDF
+    filename = f"balance_{socio['numero_socio']}.pdf"
+    filepath = os.path.join(BACKUP_DIR, filename)
+
+    c = canvas.Canvas(filepath, pagesize=letter)
+    c.setFont("Helvetica", 12)
+
+    y = 750
+    c.drawString(50, y, f"BALANCE FINANCIERO – SOCIO {socio['numero_socio']} - {socio['nombre']}")
+    y -= 40
+
+    c.drawString(50, y, f"Aportes totales: ${resumen['total_aportes']}")
+    y -= 20
+
+    c.drawString(50, y, f"Retiros totales: ${resumen['total_retiros']}")
+    y -= 20
+
+    c.drawString(50, y, f"Saldo ahorro: ${resumen['saldo_ahorro']}")
+    y -= 20
+
+    c.drawString(50, y, f"Préstamos recibidos: ${resumen['total_prestamos']}")
+    y -= 20
+
+    c.drawString(50, y, f"Pagos de préstamos (principal): ${resumen['total_pag_principal']}")
+    y -= 20
+
+    c.drawString(50, y, f"Pagos de intereses: ${resumen['total_pag_interes']}")
+    y -= 20
+
+    c.drawString(50, y, f"Pagos de multas: ${resumen['total_pag_multa']}")
+    y -= 40
+
+    c.drawString(50, y, "Reporte generado automáticamente por el sistema de Cooperativa.")
+    
+    c.save()
+
+    return send_file(filepath, as_attachment=True)
+
 
 # ==============================
 # BACKUPS
