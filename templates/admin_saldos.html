@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h3 class="mb-3">Saldos por socio</h3>
+
+<p>Desde esta pantalla puedes ver el saldo de ahorro de cada socio y descargar un estado de cuenta en PDF.</p>
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th>Número</th>
+      <th>Nombre</th>
+      <th>Saldo ahorro</th>
+      <th>Total aportes</th>
+      <th>Total retiros</th>
+      <th>Total préstamos</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for s in saldos %}
+    <tr>
+      <td>{{ s.numero_socio }}</td>
+      <td>{{ s.nombre }}</td>
+      <td>${{ '%.2f'|format(s.saldo_ahorro) }}</td>
+      <td>${{ '%.2f'|format(s.total_aportes) }}</td>
+      <td>${{ '%.2f'|format(s.total_retiros) }}</td>
+      <td>${{ '%.2f'|format(s.total_prestamos) }}</td>
+      <td>
+        <a href="/admin/saldos/{{ s.id }}/pdf" class="btn btn-sm btn-primary">
+          Descargar PDF
+        </a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}
