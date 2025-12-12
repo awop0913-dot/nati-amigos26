@@ -7,6 +7,10 @@ import hashlib
 import os
 import shutil
 from datetime import datetime
+from io import BytesIO
+
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
 
 # ==============================
 # CONFIGURACIÓN GENERAL
@@ -42,43 +46,52 @@ def inicializar_db():
     cur = conn.cursor()
 
     # Tabla de socios (para login web)
-    cur.execute("""CREATE TABLE IF NOT EXISTS socios_web (
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS socios_web (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         numero_socio TEXT UNIQUE NOT NULL,
         nombre TEXT NOT NULL,
         password_hash TEXT NOT NULL
-    )""")
+    )
+    """)
 
     # Tabla admins
-    cur.execute("""CREATE TABLE IF NOT EXISTS admin (
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS admin (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         usuario TEXT UNIQUE NOT NULL,
         password_hash TEXT NOT NULL,
         nombre TEXT NOT NULL
-    )""")
+    )
+    """)
 
     # Tabla aportes
-    cur.execute("""CREATE TABLE IF NOT EXISTS aportes (
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS aportes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         socio_id INTEGER NOT NULL,
         fecha TEXT NOT NULL,
         monto REAL NOT NULL,
         frecuencia TEXT,
         FOREIGN KEY (socio_id) REFERENCES socios_web(id)
-    )""")
+    )
+    """)
 
     # Tabla retiros
-    cur.execute("""CREATE TABLE IF NOT EXISTS retiros (
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS retiros (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         socio_id INTEGER NOT NULL,
         fecha TEXT NOT NULL,
         monto REAL NOT NULL,
         motivo TEXT,
         FOREIGN KEY (socio_id) REFERENCES socios_web(id)
-    )""")
+    )
+    """)
 
     # Tabla préstamos
-    cur.execute("""CREATE TABLE IF NOT EXISTS prestamos (
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS prestamos (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         socio_id INTEGER NOT NULL,
         fecha_inicio TEXT NOT NULL,
@@ -89,10 +102,12 @@ def inicializar_db():
         saldo_pendiente REAL,
         estado TEXT,
         FOREIGN KEY (socio_id) REFERENCES socios_web(id)
-    )""")
+    )
+    """)
 
     # Tabla pagos de préstamo
-    cur.execute("""CREATE TABLE IF NOT EXISTS pagos_prestamo (
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS pagos_prestamo (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         prestamo_id INTEGER NOT NULL,
         fecha TEXT NOT NULL,
@@ -100,7 +115,8 @@ def inicializar_db():
         monto_interes REAL,
         monto_multa REAL,
         FOREIGN KEY (prestamo_id) REFERENCES prestamos(id)
-    )""")
+    )
+    """)
 
     # Crear admin por defecto si no existe
     cur.execute("SELECT COUNT(*) FROM admin")
@@ -218,7 +234,7 @@ def logout():
 
 
 # ==============================
-# DASHBOARD SOCIO
+# RESUMEN POR SOCIO
 # ==============================
 
 def calcular_resumen_socio(socio_id: int):
@@ -231,17 +247,21 @@ def calcular_resumen_socio(socio_id: int):
     cur.execute("SELECT COALESCE(SUM(monto),0) FROM retiros WHERE socio_id = ?", (socio_id,))
     total_retiros = cur.fetchone()[0]
 
-    cur.execute("""SELECT COALESCE(SUM(monto),0)
-                FROM prestamos
-                WHERE socio_id = ?""", (socio_id,))
+    cur.execute("""
+        SELECT COALESCE(SUM(monto),0)
+        FROM prestamos
+        WHERE socio_id = ?
+    """, (socio_id,))
     total_prestamos = cur.fetchone()[0]
 
-    cur.execute("""SELECT COALESCE(SUM(monto_principal),0),
-                           COALESCE(SUM(monto_interes),0),
-                           COALESCE(SUM(monto_multa),0)
-                    FROM pagos_prestamo pp
-                    JOIN prestamos p ON pp.prestamo_id = p.id
-                    WHERE p.socio_id = ?""", (socio_id,))
+    cur.execute("""
+        SELECT COALESCE(SUM(monto_principal),0),
+               COALESCE(SUM(monto_interes),0),
+               COALESCE(SUM(monto_multa),0)
+        FROM pagos_prestamo pp
+        JOIN prestamos p ON pp.prestamo_id = p.id
+        WHERE p.socio_id = ?
+    """, (socio_id,))
     fila = cur.fetchone()
     total_pag_principal = fila[0]
     total_pag_interes = fila[1]
@@ -250,6 +270,7 @@ def calcular_resumen_socio(socio_id: int):
     conn.close()
 
     saldo_ahorro = total_aportes - total_retiros
+
     return {
         "total_aportes": total_aportes,
         "total_retiros": total_retiros,
@@ -260,6 +281,10 @@ def calcular_resumen_socio(socio_id: int):
         "saldo_ahorro": saldo_ahorro
     }
 
+
+# ==============================
+# DASHBOARD SOCIO Y HISTORIALES
+# ==============================
 
 @app.route("/dashboard")
 @login_required
@@ -299,11 +324,13 @@ def ver_prestamos():
     socio_id = session["user_id"]
     conn = db()
     cur = conn.cursor()
-    cur.execute("""SELECT fecha_inicio, fecha_fin, monto, tasa_interes,
-                          tipo_interes, saldo_pendiente, estado
-                 FROM prestamos
-                 WHERE socio_id = ?
-                 ORDER BY fecha_inicio DESC""", (socio_id,))
+    cur.execute("""
+        SELECT fecha_inicio, fecha_fin, monto, tasa_interes,
+               tipo_interes, saldo_pendiente, estado
+        FROM prestamos
+        WHERE socio_id = ?
+        ORDER BY fecha_inicio DESC
+    """, (socio_id,))
     rows = cur.fetchall()
     conn.close()
     return render_template("prestamos.html", rows=rows)
@@ -315,18 +342,20 @@ def ver_pagos():
     socio_id = session["user_id"]
     conn = db()
     cur = conn.cursor()
-    cur.execute("""SELECT pp.fecha, pp.monto_principal, pp.monto_interes, pp.monto_multa
-                 FROM pagos_prestamo pp
-                 JOIN prestamos p ON pp.prestamo_id = p.id
-                 WHERE p.socio_id = ?
-                 ORDER BY pp.fecha DESC""", (socio_id,))
+    cur.execute("""
+        SELECT pp.fecha, pp.monto_principal, pp.monto_interes, pp.monto_multa
+        FROM pagos_prestamo pp
+        JOIN prestamos p ON pp.prestamo_id = p.id
+        WHERE p.socio_id = ?
+        ORDER BY pp.fecha DESC
+    """, (socio_id,))
     rows = cur.fetchall()
     conn.close()
     return render_template("pagos.html", rows=rows)
 
 
 # ==============================
-# PANEL ADMIN
+# PANEL ADMIN PRINCIPAL
 # ==============================
 
 @app.route("/admin/panel")
@@ -362,6 +391,166 @@ def admin_panel():
 
 
 # ==============================
+# ADMIN: SALDOS POR SOCIO + PDF
+# ==============================
+
+@app.route("/admin/saldos")
+@admin_required
+def admin_saldos():
+    conn = db()
+    cur = conn.cursor()
+    cur.execute("SELECT id, numero_socio, nombre FROM socios_web ORDER BY numero_socio")
+    socios = cur.fetchall()
+    conn.close()
+
+    lista = []
+    for s in socios:
+        resumen = calcular_resumen_socio(s["id"])
+        lista.append({
+            "id": s["id"],
+            "numero_socio": s["numero_socio"],
+            "nombre": s["nombre"],
+            "saldo_ahorro": resumen["saldo_ahorro"],
+            "total_aportes": resumen["total_aportes"],
+            "total_retiros": resumen["total_retiros"],
+            "total_prestamos": resumen["total_prestamos"]
+        })
+
+    return render_template("admin_saldos.html", saldos=lista)
+
+
+@app.route("/admin/saldos/<int:socio_id>/pdf")
+@admin_required
+def admin_saldo_pdf(socio_id):
+    conn = db()
+    cur = conn.cursor()
+    cur.execute("SELECT id, numero_socio, nombre FROM socios_web WHERE id = ?", (socio_id,))
+    socio = cur.fetchone()
+    if not socio:
+        conn.close()
+        return "Socio no encontrado", 404
+
+    resumen = calcular_resumen_socio(socio_id)
+
+    # Transacciones para detalle básico
+    cur.execute("SELECT fecha, monto, frecuencia FROM aportes WHERE socio_id = ? ORDER BY fecha", (socio_id,))
+    aportes = cur.fetchall()
+
+    cur.execute("SELECT fecha, monto, motivo FROM retiros WHERE socio_id = ? ORDER BY fecha", (socio_id,))
+    retiros = cur.fetchall()
+
+    cur.execute("""
+        SELECT fecha_inicio, fecha_fin, monto, tasa_interes, tipo_interes, saldo_pendiente, estado
+        FROM prestamos
+        WHERE socio_id = ?
+        ORDER BY fecha_inicio
+    """, (socio_id,))
+    prestamos = cur.fetchall()
+
+    cur.execute("""
+        SELECT pp.fecha, pp.monto_principal, pp.monto_interes, pp.monto_multa
+        FROM pagos_prestamo pp
+        JOIN prestamos p ON pp.prestamo_id = p.id
+        WHERE p.socio_id = ?
+        ORDER BY pp.fecha
+    """, (socio_id,))
+    pagos = cur.fetchall()
+
+    conn.close()
+
+    # Generar PDF en memoria
+    buffer = BytesIO()
+    p = canvas.Canvas(buffer, pagesize=letter)
+    width, height = letter
+
+    y = height - 50
+    p.setFont("Helvetica-Bold", 14)
+    p.drawString(50, y, "Estado de Cuenta - Cooperativa")
+    y -= 20
+    p.setFont("Helvetica", 10)
+    p.drawString(50, y, f"Socio: {socio['numero_socio']} - {socio['nombre']}")
+    y -= 15
+    p.drawString(50, y, f"Fecha de generación: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    y -= 25
+
+    # Resumen general
+    p.setFont("Helvetica-Bold", 12)
+    p.drawString(50, y, "Resumen general")
+    y -= 15
+    p.setFont("Helvetica", 10)
+    p.drawString(60, y, f"Total aportes:        ${resumen['total_aportes']:.2f}")
+    y -= 15
+    p.drawString(60, y, f"Total retiros:         ${resumen['total_retiros']:.2f}")
+    y -= 15
+    p.drawString(60, y, f"Saldo ahorro:          ${resumen['saldo_ahorro']:.2f}")
+    y -= 15
+    p.drawString(60, y, f"Total préstamos:       ${resumen['total_prestamos']:.2f}")
+    y -= 25
+
+    # Sección aportes
+    p.setFont("Helvetica-Bold", 12)
+    p.drawString(50, y, "Aportes")
+    y -= 15
+    p.setFont("Helvetica", 9)
+    for a in aportes:
+        linea = f"{a['fecha']}  -  ${a['monto']:.2f}  ({a['frecuencia'] or ''})"
+        p.drawString(60, y, linea)
+        y -= 12
+        if y < 80:
+            p.showPage()
+            y = height - 50
+    y -= 10
+
+    # Sección retiros
+    p.setFont("Helvetica-Bold", 12)
+    p.drawString(50, y, "Retiros")
+    y -= 15
+    p.setFont("Helvetica", 9)
+    for r in retiros:
+        linea = f"{r['fecha']}  -  ${r['monto']:.2f}  ({r['motivo'] or ''})"
+        p.drawString(60, y, linea)
+        y -= 12
+        if y < 80:
+            p.showPage()
+            y = height - 50
+    y -= 10
+
+    # Sección préstamos
+    p.setFont("Helvetica-Bold", 12)
+    p.drawString(50, y, "Préstamos")
+    y -= 15
+    p.setFont("Helvetica", 9)
+    for pr in prestamos:
+        linea = f"{pr['fecha_inicio']} - Monto: ${pr['monto']:.2f}, Tasa: {pr['tasa_interes']}%, Saldo: ${pr['saldo_pendiente']:.2f}, Estado: {pr['estado']}"
+        p.drawString(60, y, linea)
+        y -= 12
+        if y < 80:
+            p.showPage()
+            y = height - 50
+    y -= 10
+
+    # Sección pagos
+    p.setFont("Helvetica-Bold", 12)
+    p.drawString(50, y, "Pagos de préstamo")
+    y -= 15
+    p.setFont("Helvetica", 9)
+    for pg in pagos:
+        linea = f"{pg['fecha']} - Principal: ${pg['monto_principal']:.2f}, Interés: ${pg['monto_interes']:.2f}, Multa: ${pg['monto_multa']:.2f}"
+        p.drawString(60, y, linea)
+        y -= 12
+        if y < 80:
+            p.showPage()
+            y = height - 50
+
+    p.showPage()
+    p.save()
+    buffer.seek(0)
+
+    filename = f"estado_cuenta_{socio['numero_socio']}.pdf"
+    return send_file(buffer, as_attachment=True, download_name=filename, mimetype="application/pdf")
+
+
+# ==============================
 # ADMIN: GESTIÓN DE SOCIOS
 # ==============================
 
@@ -391,8 +580,10 @@ def admin_socio_nuevo():
             try:
                 conn = db()
                 cur = conn.cursor()
-                cur.execute("""INSERT INTO socios_web (numero_socio, nombre, password_hash)
-                            VALUES (?,?,?)""", (numero, nombre, hash_password(password)))
+                cur.execute("""
+                    INSERT INTO socios_web (numero_socio, nombre, password_hash)
+                    VALUES (?,?,?)
+                """, (numero, nombre, hash_password(password)))
                 conn.commit()
                 conn.close()
                 return redirect("/admin/socios")
@@ -411,9 +602,11 @@ def admin_socio_editar(socio_id):
     if request.method == "POST":
         numero = request.form.get("numero_socio")
         nombre = request.form.get("nombre")
-        cur.execute("""UPDATE socios_web
-                    SET numero_socio = ?, nombre = ?
-                    WHERE id = ?""", (numero, nombre, socio_id))
+        cur.execute("""
+            UPDATE socios_web
+            SET numero_socio = ?, nombre = ?
+            WHERE id = ?
+        """, (numero, nombre, socio_id))
         conn.commit()
         conn.close()
         return redirect("/admin/socios")
@@ -464,6 +657,7 @@ def admin_socio_eliminar(socio_id):
             ),
             prestamos_ids
         )
+
     # borrar préstamos, aportes, retiros y el socio
     cur.execute("DELETE FROM prestamos WHERE socio_id = ?", (socio_id,))
     cur.execute("DELETE FROM aportes WHERE socio_id = ?", (socio_id,))
@@ -505,8 +699,10 @@ def admin_aporte_nuevo():
             return render_template("admin_aporte_nuevo.html", error=error)
         socio_id = row["id"]
 
-        cur.execute("""INSERT INTO aportes (socio_id, fecha, monto, frecuencia)
-                    VALUES (?,?,?,?)""", (socio_id, fecha, monto_float, frecuencia))
+        cur.execute("""
+            INSERT INTO aportes (socio_id, fecha, monto, frecuencia)
+            VALUES (?,?,?,?)
+        """, (socio_id, fecha, monto_float, frecuencia))
         conn.commit()
         conn.close()
         return redirect("/admin/panel")
@@ -540,8 +736,10 @@ def admin_retiro_nuevo():
             return render_template("admin_retiro_nuevo.html", error=error)
         socio_id = row["id"]
 
-        cur.execute("""INSERT INTO retiros (socio_id, fecha, monto, motivo)
-                    VALUES (?,?,?,?)""", (socio_id, fecha, monto_float, motivo))
+        cur.execute("""
+            INSERT INTO retiros (socio_id, fecha, monto, motivo)
+            VALUES (?,?,?,?)
+        """, (socio_id, fecha, monto_float, motivo))
         conn.commit()
         conn.close()
         return redirect("/admin/panel")
@@ -579,12 +777,14 @@ def admin_prestamo_nuevo():
             return render_template("admin_prestamo_nuevo.html", error=error)
         socio_id = row["id"]
 
-        cur.execute("""INSERT INTO prestamos (
-                        socio_id, fecha_inicio, fecha_fin, monto,
-                        tasa_interes, tipo_interes, saldo_pendiente, estado
-                    ) VALUES (?,?,?,?,?,?,?,?)""",
-                    (socio_id, fecha_inicio, fecha_fin, monto_float,
-                     tasa_float, tipo, monto_float, estado))
+        cur.execute("""
+            INSERT INTO prestamos (
+                socio_id, fecha_inicio, fecha_fin, monto,
+                tasa_interes, tipo_interes, saldo_pendiente, estado
+            )
+            VALUES (?,?,?,?,?,?,?,?)
+        """, (socio_id, fecha_inicio, fecha_fin, monto_float,
+              tasa_float, tipo, monto_float, estado))
         conn.commit()
         conn.close()
         return redirect("/admin/panel")
@@ -613,9 +813,11 @@ def admin_pago_nuevo():
         except:
             error = "Montos inválidos."
         else:
-            cur.execute("""INSERT INTO pagos_prestamo
-                        (prestamo_id, fecha, monto_principal, monto_interes, monto_multa)
-                        VALUES (?,?,?,?,?)""", (prestamo_id, fecha, monto_p_f, monto_i_f, monto_m_f))
+            cur.execute("""
+                INSERT INTO pagos_prestamo
+                (prestamo_id, fecha, monto_principal, monto_interes, monto_multa)
+                VALUES (?,?,?,?,?)
+            """, (prestamo_id, fecha, monto_p_f, monto_i_f, monto_m_f))
 
             # actualizar saldo
             cur.execute("SELECT saldo_pendiente FROM prestamos WHERE id = ?", (prestamo_id,))
@@ -631,74 +833,15 @@ def admin_pago_nuevo():
             return redirect("/admin/panel")
 
     # GET o error: cargar préstamos
-    cur.execute("""SELECT p.id, s.numero_socio, s.nombre, p.monto, p.saldo_pendiente
-                 FROM prestamos p
-                 JOIN socios_web s ON p.socio_id = s.id
-                 ORDER BY s.numero_socio""")
+    cur.execute("""
+        SELECT p.id, s.numero_socio, s.nombre, p.monto, p.saldo_pendiente
+        FROM prestamos p
+        JOIN socios_web s ON p.socio_id = s.id
+        ORDER BY s.numero_socio
+    """)
     prestamos = cur.fetchall()
     conn.close()
     return render_template("admin_pago_nuevo.html", prestamos=prestamos, error=error)
-
-# ==============================
-# RESUMEN FINANCIERO
-# ==============================
-
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter
-
-@app.route("/admin/socios/<int:socio_id>/pdf")
-@admin_required
-def admin_socio_pdf(socio_id):
-    conn = db()
-    cur = conn.cursor()
-
-    # Datos del socio
-    cur.execute("SELECT numero_socio, nombre FROM socios_web WHERE id=?", (socio_id,))
-    socio = cur.fetchone()
-
-    if not socio:
-        return "Socio no encontrado"
-
-    # Resumen financiero
-    resumen = calcular_resumen_socio(socio_id)
-
-    # Nombre del archivo PDF
-    filename = f"balance_{socio['numero_socio']}.pdf"
-    filepath = os.path.join(BACKUP_DIR, filename)
-
-    c = canvas.Canvas(filepath, pagesize=letter)
-    c.setFont("Helvetica", 12)
-
-    y = 750
-    c.drawString(50, y, f"BALANCE FINANCIERO – SOCIO {socio['numero_socio']} - {socio['nombre']}")
-    y -= 40
-
-    c.drawString(50, y, f"Aportes totales: ${resumen['total_aportes']}")
-    y -= 20
-
-    c.drawString(50, y, f"Retiros totales: ${resumen['total_retiros']}")
-    y -= 20
-
-    c.drawString(50, y, f"Saldo ahorro: ${resumen['saldo_ahorro']}")
-    y -= 20
-
-    c.drawString(50, y, f"Préstamos recibidos: ${resumen['total_prestamos']}")
-    y -= 20
-
-    c.drawString(50, y, f"Pagos de préstamos (principal): ${resumen['total_pag_principal']}")
-    y -= 20
-
-    c.drawString(50, y, f"Pagos de intereses: ${resumen['total_pag_interes']}")
-    y -= 20
-
-    c.drawString(50, y, f"Pagos de multas: ${resumen['total_pag_multa']}")
-    y -= 40
-
-    c.drawString(50, y, "Reporte generado automáticamente por el sistema de Cooperativa.")
-    
-    c.save()
-
-    return send_file(filepath, as_attachment=True)
 
 
 # ==============================
